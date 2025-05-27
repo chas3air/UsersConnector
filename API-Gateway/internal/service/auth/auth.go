@@ -1,4 +1,4 @@
-package auth
+package authservice
 
 import (
 	"api-gateway/internal/domain/models"

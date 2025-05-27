@@ -1,4 +1,4 @@
-package users
+package usershandler
 
 import (
 	"api-gateway/internal/domain/models"

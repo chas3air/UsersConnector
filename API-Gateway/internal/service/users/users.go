@@ -1,4 +1,4 @@
-package users
+package usersservice
 
 import (
 	"api-gateway/internal/domain/models"

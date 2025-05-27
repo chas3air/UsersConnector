@@ -1,4 +1,4 @@
-package auth
+package authhandler
 
 import (
 	"api-gateway/internal/domain/models"
