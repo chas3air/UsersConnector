@@ -127,8 +127,6 @@ func (s *serverAPI) Insert(ctx context.Context, req *umv1.InsertRequest) (*umv1.
 		return nil, status.Error(codes.InvalidArgument, "invalid user")
 	}
 
-	log.Info("User for insert", slog.Any("user", userForInsert))
-
 	insertedUser, err := s.service.Insert(ctx, userForInsert)
 	if err != nil {
 		if errors.Is(err, serviceerror.ErrAlreadyExists) {

@@ -51,11 +51,11 @@ func (a *App) Run() error {
 	r.HandleFunc("/api/v1/refresh", authHandler.RefreshTokenHandler)
 	r.HandleFunc("/api/v1/logout", authHandler.LoginHandler)
 
-	r.HandleFunc("/api/v1/users", usersHandler.GetUsersHandler)
-	r.HandleFunc("/api/v1/users/{id}", usersHandler.GetUserByIdHandler)
-	r.HandleFunc("/api/v1/users", usersHandler.InsertHandler)
-	r.HandleFunc("/api/v1/users/{id}", usersHandler.UpdateHandler)
-	r.HandleFunc("/api/v1/users/{id}", usersHandler.DeleteHandler)
+	r.HandleFunc("/api/v1/users", usersHandler.GetUsersHandler).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/users/{id}", usersHandler.GetUserByIdHandler).Methods(http.MethodGet)
+	r.HandleFunc("/api/v1/users", usersHandler.InsertHandler).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/users/{id}", usersHandler.UpdateHandler).Methods(http.MethodPut)
+	r.HandleFunc("/api/v1/users/{id}", usersHandler.DeleteHandler).Methods(http.MethodDelete)
 
 	if err := http.ListenAndServe(fmt.Sprintf(":%d", a.cfg.Port), r); err != nil {
 		return err

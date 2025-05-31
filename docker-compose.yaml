@@ -47,8 +47,6 @@ services:
       - HOST=UsersService
       - PORT=50051
 
-        
-
 networks:
   work_net:
 

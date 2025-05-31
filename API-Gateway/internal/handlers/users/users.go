@@ -96,16 +96,12 @@ func (u *UsersHandler) GetUserByIdHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 }
-
 func (u *UsersHandler) InsertHandler(w http.ResponseWriter, r *http.Request) {
 	const op = "handlers.users.InsertHandler"
-	log := u.log.With(
-		"op", op,
-	)
+	log := u.log.With("op", op)
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		log.Error("Cannot read request body", sl.Err(err))
 		http.Error(w, "Cannot read request body", http.StatusBadRequest)
 		return
 	}
@@ -138,7 +134,6 @@ func (u *UsersHandler) InsertHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
-
 func (u *UsersHandler) UpdateHandler(w http.ResponseWriter, r *http.Request) {
 	const op = "handlers.users.UpdateHandler"
 	log := u.log.With(

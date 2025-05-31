@@ -15,6 +15,8 @@ func main() {
 
 	log := logger.SetupLogger(cfg.Env)
 
+	log.Info("application configured")
+
 	connection := grpcstorage.New(log, os.Getenv("HOST"), os.Getenv("PORT"))
 
 	application := app.New(cfg, log, connection)
