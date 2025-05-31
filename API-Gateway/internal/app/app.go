@@ -5,7 +5,7 @@ import (
 	usershandler "api-gateway/internal/handlers/users"
 	authservice "api-gateway/internal/service/auth"
 	usersservice "api-gateway/internal/service/users"
-	usersstorage "api-gateway/internal/storage/users"
+	grpcstorage "api-gateway/internal/storage/grpc/users"
 	"api-gateway/pkg/config"
 	"fmt"
 	"log/slog"
@@ -15,14 +15,16 @@ import (
 )
 
 type App struct {
-	cfg *config.Config
-	log *slog.Logger
+	cfg     *config.Config
+	log     *slog.Logger
+	storage *grpcstorage.GRPCUsersStorage
 }
 
-func New(cfg *config.Config, log *slog.Logger) *App {
+func New(cfg *config.Config, log *slog.Logger, storage *grpcstorage.GRPCUsersStorage) *App {
 	return &App{
-		cfg: cfg,
-		log: log,
+		cfg:     cfg,
+		log:     log,
+		storage: storage,
 	}
 }
 
@@ -35,11 +37,10 @@ func (a *App) MustRun() {
 func (a *App) Run() error {
 	r := mux.NewRouter()
 
-	usersStorage := usersstorage.New(a.log, "users", 1234)
-	usersService := usersservice.New(a.log, usersStorage)
+	usersService := usersservice.New(a.log, a.storage)
 	usersHandler := usershandler.New(a.log, usersService)
 
-	authService := authservice.New(a.log, usersStorage)
+	authService := authservice.New(a.log, a.storage)
 	authHandler := authhandler.New(a.log, authService)
 
 	r.HandleFunc("/api/v1/health-check", func(w http.ResponseWriter, r *http.Request) {
