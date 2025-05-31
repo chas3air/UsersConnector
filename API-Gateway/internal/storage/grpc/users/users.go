@@ -57,7 +57,7 @@ func (s *GRPCUsersStorage) GetUsers(ctx context.Context) ([]models.User, error) 
 	c := umv1.NewUsersManagerClient(s.conn)
 	res, err := c.GetUsers(ctx, nil)
 	if err != nil {
-		log.Warn("failed to get users", sl.Err(err))
+		log.Error("failed to get users", sl.Err(err))
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
 
@@ -75,21 +75,118 @@ func (s *GRPCUsersStorage) GetUsers(ctx context.Context) ([]models.User, error) 
 }
 
 // GetUserById implements users.IUsersStorage.
-func (u *GRPCUsersStorage) GetUserById(ctx context.Context, uid uuid.UUID) (models.User, error) {
-	panic("unimplemented")
+func (s *GRPCUsersStorage) GetUserById(ctx context.Context, uid uuid.UUID) (models.User, error) {
+	const op = "storage.grpc.users.GetUserById"
+	log := s.log.With(slog.String("op", op))
+
+	select {
+	case <-ctx.Done():
+		return models.User{}, fmt.Errorf("%s: %w", op, ctx.Err())
+	default:
+	}
+
+	c := umv1.NewUsersManagerClient(s.conn)
+	res, err := c.GetUserById(ctx, &umv1.GetUserByIdRequest{
+		Id: uid.String(),
+	})
+	if err != nil {
+		log.Error("Cannot fetxh user by id", sl.Err(err))
+		return models.User{}, fmt.Errorf("%s: %w", op, err)
+	}
+
+	user, err := umprofiles.ProtoUsrToUsr(res.GetUser())
+	if err != nil {
+		log.Error("Wrong user format", sl.Err(err))
+		return models.User{}, fmt.Errorf("%s: %w", op, err)
+	}
+
+	return user, nil
 }
 
 // Insert implements users.IUsersStorage.
-func (u *GRPCUsersStorage) Insert(ctx context.Context, user models.User) (models.User, error) {
-	panic("unimplemented")
+func (s *GRPCUsersStorage) Insert(ctx context.Context, user models.User) (models.User, error) {
+	const op = "storage.grpc.users.Insert"
+	log := s.log.With(slog.String("op", op))
+
+	select {
+	case <-ctx.Done():
+		return models.User{}, fmt.Errorf("%s: %w", op, ctx.Err())
+	default:
+	}
+
+	c := umv1.NewUsersManagerClient(s.conn)
+	res, err := c.Insert(ctx, &umv1.InsertRequest{
+		User: umprofiles.UsrToProtoUsr(user),
+	})
+	if err != nil {
+		log.Error("Error inserting user", sl.Err(err))
+		return models.User{}, fmt.Errorf("%s: %w", op, err)
+	}
+
+	insertedUser, err := umprofiles.ProtoUsrToUsr(res.GetUser())
+	if err != nil {
+		log.Error("Wrong user format", sl.Err(err))
+		return models.User{}, fmt.Errorf("%s: %w", op, err)
+	}
+
+	return insertedUser, nil
 }
 
 // Update implements users.IUsersStorage.
-func (u *GRPCUsersStorage) Update(ctx context.Context, uid uuid.UUID, user models.User) (models.User, error) {
-	panic("unimplemented")
+func (s *GRPCUsersStorage) Update(ctx context.Context, uid uuid.UUID, user models.User) (models.User, error) {
+	const op = "storage.grpc.users.Update"
+	log := s.log.With(slog.String("op", op))
+
+	select {
+	case <-ctx.Done():
+		return models.User{}, fmt.Errorf("%s: %w", op, ctx.Err())
+	default:
+	}
+
+	c := umv1.NewUsersManagerClient(s.conn)
+	res, err := c.Update(ctx, &umv1.UpdateRequest{
+		Id:   uid.String(),
+		User: umprofiles.UsrToProtoUsr(user),
+	})
+	if err != nil {
+		log.Error("Error updating user", sl.Err(err))
+		return models.User{}, fmt.Errorf("%s: %w", op, err)
+	}
+
+	updatedUser, err := umprofiles.ProtoUsrToUsr(res.GetUser())
+	if err != nil {
+		log.Error("Wrong user format", sl.Err(err))
+		return models.User{}, fmt.Errorf("%s: %w", op, err)
+	}
+
+	return updatedUser, nil
 }
 
 // Delete implements users.IUsersStorage.
-func (u *GRPCUsersStorage) Delete(ctx context.Context, uid uuid.UUID) (models.User, error) {
-	panic("unimplemented")
+func (s *GRPCUsersStorage) Delete(ctx context.Context, uid uuid.UUID) (models.User, error) {
+	const op = "storage.grpc.users.Delete"
+	log := s.log.With(slog.String("op", op))
+
+	select {
+	case <-ctx.Done():
+		return models.User{}, fmt.Errorf("%s: %w", op, ctx.Err())
+	default:
+	}
+
+	c := umv1.NewUsersManagerClient(s.conn)
+	res, err := c.Delete(ctx, &umv1.DeleteRequest{
+		Id: uid.String(),
+	})
+	if err != nil {
+		log.Error("Error deleting user", sl.Err(err))
+		return models.User{}, fmt.Errorf("%s: %w", op, err)
+	}
+
+	deletedUser, err := umprofiles.ProtoUsrToUsr(res.GetUser())
+	if err != nil {
+		log.Error("Wrong user format", sl.Err(err))
+		return models.User{}, fmt.Errorf("%s: %w", op, err)
+	}
+
+	return deletedUser, nil
 }
