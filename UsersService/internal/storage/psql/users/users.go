@@ -32,7 +32,7 @@ func New(log *slog.Logger, connStr string) *UsersStorage {
 	}
 
 	wd, _ := os.Getwd()
-	migrationPath := filepath.Join(wd, "app", "migrations")
+	migrationPath := filepath.Join(wd, "migrations")
 	if err := applyMigrations(db, migrationPath); err != nil {
 		panic(err)
 	}
@@ -111,7 +111,7 @@ func (u *UsersStorage) GetUserById(ctx context.Context, uid uuid.UUID) (models.U
 	`, uid).Scan(&user.Id, &user.Login, &user.Password, &user.Role)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			log.Warn("User with current id not found", sl.Err(err))
+			log.Warn("User with current id not found", sl.Err(storageerror.ErrNotFound))
 			return models.User{}, fmt.Errorf("%s: %w", op, storageerror.ErrNotFound)
 		}
 
@@ -141,7 +141,7 @@ func (u *UsersStorage) Insert(ctx context.Context, user models.User) (models.Use
 	`, user.Id, user.Login, user.Password, user.Role)
 	if err != nil {
 		if pgErr, ok := err.(*pq.Error); ok && pgErr.Code == "23505" {
-			log.Error("User with current id already exists", sl.Err(err))
+			log.Error("User with current id already exists", sl.Err(storageerror.ErrAlreadyExists))
 			return models.User{}, fmt.Errorf("%s: %w", op, storageerror.ErrAlreadyExists)
 		}
 
@@ -205,7 +205,7 @@ func (u *UsersStorage) Delete(ctx context.Context, uid uuid.UUID) (models.User, 
 	user, err := u.GetUserById(ctx, uid)
 	if err != nil {
 		if errors.Is(err, storageerror.ErrNotFound) {
-			log.Warn("User not found", sl.Err(err))
+			log.Warn("User not found", sl.Err(storageerror.ErrNotFound))
 			return models.User{}, fmt.Errorf("%s: %w", op, storageerror.ErrNotFound)
 		}
 

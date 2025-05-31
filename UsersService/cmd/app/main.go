@@ -17,7 +17,7 @@ func main() {
 
 	storage := usersstorage.New(log, os.Getenv("DB_CONN_STR"))
 
-	application := app.New(log, cfg.Port, storage)
+	application := app.New(log, cfg.Grpc.Port, storage)
 	go func() {
 		application.GRPCServer.MustRun()
 	}()

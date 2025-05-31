@@ -98,7 +98,7 @@ func (u *UsersService) Insert(ctx context.Context, userForInsert models.User) (m
 	insertedUser, err := u.storage.Insert(ctx, userForInsert)
 	if err != nil {
 		if errors.Is(err, storageerror.ErrAlreadyExists) {
-			log.Warn("User already exists", sl.Err(storageerror.ErrAlreadyExists))
+			log.Warn("User already exists", sl.Err(serviceerror.ErrAlreadyExists))
 			return models.User{}, fmt.Errorf("%s: %w", op, serviceerror.ErrAlreadyExists)
 		}
 
@@ -125,7 +125,7 @@ func (u *UsersService) Update(ctx context.Context, uid uuid.UUID, userForUpdate 
 	updatedUser, err := u.storage.Update(ctx, uid, userForUpdate)
 	if err != nil {
 		if errors.Is(err, storageerror.ErrNotFound) {
-			log.Warn("User not found", sl.Err(storageerror.ErrNotFound))
+			log.Warn("User not found", sl.Err(serviceerror.ErrNotFound))
 			return models.User{}, fmt.Errorf("%s: %w", op, serviceerror.ErrNotFound)
 		}
 
@@ -152,7 +152,7 @@ func (u *UsersService) Delete(ctx context.Context, uid uuid.UUID) (models.User, 
 	deletedUser, err := u.storage.Delete(ctx, uid)
 	if err != nil {
 		if errors.Is(err, storageerror.ErrNotFound) {
-			log.Warn("User not found", sl.Err(storageerror.ErrNotFound))
+			log.Warn("User not found", sl.Err(serviceerror.ErrNotFound))
 			return models.User{}, fmt.Errorf("%s: %w", op, serviceerror.ErrNotFound)
 		}
 
