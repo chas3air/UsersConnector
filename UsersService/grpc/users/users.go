@@ -144,11 +144,79 @@ func (s *serverAPI) Insert(ctx context.Context, req *umv1.InsertRequest) (*umv1.
 }
 
 // Update implements umv1.UsersManagerServer.
-func (s *serverAPI) Update(context.Context, *umv1.UpdateRequest) (*umv1.UpdateResponse, error) {
-	panic("unimplemented")
+func (s *serverAPI) Update(ctx context.Context, req *umv1.UpdateRequest) (*umv1.UpdateResponse, error) {
+	const op = "grpc.users.Update"
+	log := s.log.With(
+		"op", op,
+	)
+
+	select {
+	case <-ctx.Done():
+		log.Error("Request time out")
+		return nil, status.Error(codes.DeadlineExceeded, "request time out")
+	default:
+	}
+
+	uid, err := uuid.Parse(req.GetId())
+	if err != nil {
+		log.Error("Cannot parse request uid", sl.Err(err))
+		return nil, status.Error(codes.InvalidArgument, "invalid uid")
+	}
+
+	userForUpdate, err := profiles.ProtoUsrToUsr(req.GetUser())
+	if err != nil {
+		log.Error("Error parse pb_user to user", sl.Err(err))
+		return nil, status.Error(codes.InvalidArgument, "invalid user")
+	}
+
+	updatedUser, err := s.service.Update(ctx, uid, userForUpdate)
+	if err != nil {
+		if errors.Is(err, serviceerror.ErrNotFound) {
+			log.Warn("User not found", sl.Err(serviceerror.ErrNotFound))
+			return nil, status.Error(codes.NotFound, "user not found")
+		}
+
+		log.Error("Error updating user", sl.Err(err))
+		return nil, status.Error(codes.Internal, "error updating user")
+	}
+
+	return &umv1.UpdateResponse{
+		User: profiles.UsrToProtoUsr(updatedUser),
+	}, nil
 }
 
 // Delete implements umv1.UsersManagerServer.
-func (s *serverAPI) Delete(context.Context, *umv1.DeleteRequest) (*umv1.DeleteResponse, error) {
-	panic("unimplemented")
+func (s *serverAPI) Delete(ctx context.Context, req *umv1.DeleteRequest) (*umv1.DeleteResponse, error) {
+	const op = "grpc.users.Delete"
+	log := s.log.With(
+		"op", op,
+	)
+
+	select {
+	case <-ctx.Done():
+		log.Error("Request time out")
+		return nil, status.Error(codes.DeadlineExceeded, "request time out")
+	default:
+	}
+
+	uid, err := uuid.Parse(req.GetId())
+	if err != nil {
+		log.Error("Cannot parse request uid", sl.Err(err))
+		return nil, status.Error(codes.InvalidArgument, "invalid uid")
+	}
+
+	deletedUser, err := s.service.Delete(ctx, uid)
+	if err != nil {
+		if errors.Is(err, serviceerror.ErrNotFound) {
+			log.Warn("User not found", sl.Err(serviceerror.ErrNotFound))
+			return nil, status.Error(codes.NotFound, "user not found")
+		}
+
+		log.Error("Error deleting user", sl.Err(err))
+		return nil, status.Error(codes.Internal, "error deleting user")
+	}
+
+	return &umv1.DeleteResponse{
+		User: profiles.UsrToProtoUsr(deletedUser),
+	}, nil
 }
