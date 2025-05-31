@@ -1,5 +1,13 @@
 github.com/BurntSushi/toml v1.2.1 h1:9F2/+DoOYIOksmaJFPw1tGFy1eDnIJXg+UHjuD8lTak=
 github.com/BurntSushi/toml v1.2.1/go.mod h1:CxXYINrC8qIiEnFrOxCa7Jy5BFHlXnUU2pbicEuybxQ=
+github.com/chas3air/protos v0.4.1 h1:YlkwS7AdG0z99Y7MRXrO15DBN8mfuC74Zeo0uTmdH5Q=
+github.com/chas3air/protos v0.4.1/go.mod h1:vDBW+iT4gcFFyPZIuUi5929blqqBL8qI5vBNZxuswNc=
+github.com/chas3air/protos v0.4.2 h1:KxuJc1eX24ibtXnpZIwstF79byWq35xzCybGXePujA0=
+github.com/chas3air/protos v0.4.2/go.mod h1:vDBW+iT4gcFFyPZIuUi5929blqqBL8qI5vBNZxuswNc=
+github.com/chas3air/protos v0.4.3 h1:74fe1HLktJRx8TZkloS4jd4mto8kC+nuWH+z7uXEUDY=
+github.com/chas3air/protos v0.4.3/go.mod h1:vDBW+iT4gcFFyPZIuUi5929blqqBL8qI5vBNZxuswNc=
+github.com/chas3air/protos v0.4.4 h1:QxWMWjbsSt12DSyl4K8MFn0EYrG2xOZUV19GWj/qYE0=
+github.com/chas3air/protos v0.4.4/go.mod h1:vDBW+iT4gcFFyPZIuUi5929blqqBL8qI5vBNZxuswNc=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/dustin/go-humanize v1.0.1 h1:GzkhY7T5VNhEkwH0PVJgjz+fX1rhBrR7pRT3mDkpeCY=
