@@ -2,7 +2,7 @@ package main
 
 import (
 	"api-gateway/internal/app"
-	"api-gateway/internal/storage/grpc/users"
+	grpcstorage "api-gateway/internal/storage/grpc/users"
 	"api-gateway/pkg/config"
 	"api-gateway/pkg/lib/logger"
 	"os"
@@ -27,6 +27,9 @@ func main() {
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 
 	<-stop
+
+	connection.Close()
+	log.Info("connection closed")
 
 	log.Info("application stoped")
 }
