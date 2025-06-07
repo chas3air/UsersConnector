@@ -1,4 +1,4 @@
-package usersstorage
+package userspsqlstorage
 
 import (
 	"context"
@@ -17,14 +17,14 @@ import (
 	"github.com/pressly/goose/v3"
 )
 
-type UsersStorage struct {
+type UsersPsqlStorage struct {
 	log *slog.Logger
 	DB  *sql.DB
 }
 
 const UsersTableName = "users"
 
-func New(log *slog.Logger, connStr string) *UsersStorage {
+func New(log *slog.Logger, connStr string) *UsersPsqlStorage {
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		log.Error("Error connecting to database", sl.Err(err))
@@ -37,7 +37,7 @@ func New(log *slog.Logger, connStr string) *UsersStorage {
 		panic(err)
 	}
 
-	return &UsersStorage{
+	return &UsersPsqlStorage{
 		log: log,
 		DB:  db,
 	}
@@ -47,14 +47,14 @@ func applyMigrations(db *sql.DB, migrationsPath string) error {
 	return goose.Up(db, migrationsPath)
 }
 
-func (u *UsersStorage) Close() {
+func (u *UsersPsqlStorage) Close() {
 	if err := u.DB.Close(); err != nil {
 		panic(err)
 	}
 }
 
-// GetUsers implements IUsersStorage.
-func (u *UsersStorage) GetUsers(ctx context.Context) ([]models.User, error) {
+// GetUsers implements IUsersPsqlStorage.
+func (u *UsersPsqlStorage) GetUsers(ctx context.Context) ([]models.User, error) {
 	const op = "storage.psql.users.GetUsers"
 	log := u.log.With(
 		"op", op,
@@ -91,8 +91,8 @@ func (u *UsersStorage) GetUsers(ctx context.Context) ([]models.User, error) {
 	return users, nil
 }
 
-// GetUserById implements IUsersStorage.
-func (u *UsersStorage) GetUserById(ctx context.Context, uid uuid.UUID) (models.User, error) {
+// GetUserById implements IUsersPsqlStorage.
+func (u *UsersPsqlStorage) GetUserById(ctx context.Context, uid uuid.UUID) (models.User, error) {
 	const op = "storage.psql.users.GetUserById"
 	log := u.log.With(
 		"op", op,
@@ -122,8 +122,8 @@ func (u *UsersStorage) GetUserById(ctx context.Context, uid uuid.UUID) (models.U
 	return user, nil
 }
 
-// Insert implements IUsersStorage.
-func (u *UsersStorage) Insert(ctx context.Context, user models.User) (models.User, error) {
+// Insert implements IUsersPsqlStorage.
+func (u *UsersPsqlStorage) Insert(ctx context.Context, user models.User) (models.User, error) {
 	const op = "storage.psql.users.Insert"
 	log := u.log.With(
 		"op", op,
@@ -152,8 +152,8 @@ func (u *UsersStorage) Insert(ctx context.Context, user models.User) (models.Use
 	return user, nil
 }
 
-// Update implements IUsersStorage.
-func (u *UsersStorage) Update(ctx context.Context, uid uuid.UUID, user models.User) (models.User, error) {
+// Update implements IUsersPsqlStorage.
+func (u *UsersPsqlStorage) Update(ctx context.Context, uid uuid.UUID, user models.User) (models.User, error) {
 	const op = "storage.psql.users.Update"
 	log := u.log.With(
 		slog.String("op", op),
@@ -189,8 +189,8 @@ func (u *UsersStorage) Update(ctx context.Context, uid uuid.UUID, user models.Us
 	return user, nil
 }
 
-// Delete implements IUsersStorage.
-func (u *UsersStorage) Delete(ctx context.Context, uid uuid.UUID) (models.User, error) {
+// Delete implements IUsersPsqlStorage.
+func (u *UsersPsqlStorage) Delete(ctx context.Context, uid uuid.UUID) (models.User, error) {
 	const op = "storage.psql.users.Delete"
 	log := u.log.With(
 		slog.String("op", op),
