@@ -18,6 +18,16 @@ services:
     volumes:
     - uc_volume_users:/var/lib/postgresql/data
 
+  mongo_cont:
+    image: mongo:latest
+    container_name: mongo_cont
+    ports:
+      - "27000:27017"
+    networks:
+      - work_net
+    volumes:
+      - mongo_data:/data/db
+
   users_service:
     build:
       context: ./UsersService
@@ -52,3 +62,4 @@ networks:
 
 volumes:
   uc_volume_users:
+  mongo_data:

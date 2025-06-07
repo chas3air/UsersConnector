@@ -5,7 +5,7 @@ import (
 	"os/signal"
 	"syscall"
 	"usersservice/internal/app"
-	usersstorage "usersservice/internal/storage/psql/users"
+	usersstorage "usersservice/internal/storage/mongo/users"
 	"usersservice/pkg/config"
 	"usersservice/pkg/lib/logger"
 )
@@ -15,7 +15,7 @@ func main() {
 
 	log := logger.SetupLogger(cfg.Env)
 
-	storage := usersstorage.New(log, os.Getenv("DB_CONN_STR"))
+	storage := usersstorage.New(log, "mongodb://mongo_cont:27017")
 
 	application := app.New(log, cfg.Grpc.Port, storage)
 	go func() {
