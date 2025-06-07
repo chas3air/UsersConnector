@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"usersservice/internal/domain/models"
+	storageerror "usersservice/internal/storage"
 	"usersservice/pkg/lib/logger/sl"
 
 	"github.com/google/uuid"
@@ -114,6 +115,11 @@ func (u *UsersMongoStorage) Insert(ctx context.Context, user models.User) (model
 
 	collection := u.client.Database(DatabaseName).Collection(UsersCollectionName)
 
+	if err := collection.FindOne(ctx, bson.M{"id": user.Id}).Err(); err == nil {
+		log.Error("User already exists")
+		return models.User{}, fmt.Errorf("%s: %w", op, storageerror.ErrAlreadyExists)
+	}
+
 	insertResult, err := collection.InsertOne(ctx, user)
 	if err != nil {
 		log.Error("Error inserting user", sl.Err(err))
@@ -140,6 +146,11 @@ func (u *UsersMongoStorage) Update(ctx context.Context, uid uuid.UUID, user mode
 	collection := u.client.Database(DatabaseName).Collection(UsersCollectionName)
 
 	filter := bson.M{"id": uid}
+
+	if err := collection.FindOne(ctx, filter); err.Err() != nil {
+		log.Error("User don`t exists", sl.Err(fmt.Errorf("%s: %w", op, storageerror.ErrNotFound)))
+		return models.User{}, fmt.Errorf("%s: %w", op, storageerror.ErrNotFound)
+	}
 
 	_, err := collection.UpdateOne(ctx, filter, bson.M{"$set": user})
 	if err != nil {
@@ -168,13 +179,7 @@ func (u *UsersMongoStorage) Delete(ctx context.Context, uid uuid.UUID) (models.U
 	filter := bson.M{"id": uid}
 
 	var user models.User
-	err := collection.FindOne(ctx, filter).Decode(&user)
-	if err != nil {
-		log.Error("Error fetching user before deleting", sl.Err(err))
-		return models.User{}, fmt.Errorf("%s: %w", op, err)
-	}
-
-	_, err = collection.DeleteOne(ctx, filter)
+	err := collection.FindOneAndDelete(ctx, filter).Decode(&user)
 	if err != nil {
 		log.Error("Error deleting user", sl.Err(err))
 		return models.User{}, fmt.Errorf("%s: %w", op, err)
