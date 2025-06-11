@@ -30,16 +30,20 @@ type IUserCashService interface {
 }
 
 type UsersHandler struct {
-	log          *slog.Logger
-	service      IUsersService
-	redisService IUserCashService
+	log                *slog.Logger
+	service            IUsersService
+	redisService       IUserCashService
+	MaxRequestsPerUser int
 }
 
-func New(log *slog.Logger, service IUsersService, redisService IUserCashService) *UsersHandler {
+var frequentlyRequestedUsers = map[uuid.UUID]int{}
+
+func New(log *slog.Logger, service IUsersService, redisService IUserCashService, maxRequestsPerUser int) *UsersHandler {
 	return &UsersHandler{
-		log:          log,
-		service:      service,
-		redisService: redisService,
+		log:                log,
+		service:            service,
+		redisService:       redisService,
+		MaxRequestsPerUser: maxRequestsPerUser,
 	}
 }
 
@@ -84,6 +88,19 @@ func (u *UsersHandler) GetUserByIdHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	if frequentlyRequestedUsers[id] >= u.MaxRequestsPerUser {
+		user, err := u.redisService.Get(r.Context(), id)
+		if err == nil {
+			w.WriteHeader(http.StatusOK)
+			if err := json.NewEncoder(w).Encode(user); err != nil {
+				log.Error("Cannot write user to response", sl.Err(err))
+				http.Error(w, "Cannot write user to response", http.StatusInternalServerError)
+				return
+			}
+			return
+		}
+	}
+
 	user, err := u.service.GetUserById(r.Context(), id)
 	if err != nil {
 		if errors.Is(err, serviceerror.ErrNotFound) {
@@ -97,6 +114,11 @@ func (u *UsersHandler) GetUserByIdHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	frequentlyRequestedUsers[id]++
+	if frequentlyRequestedUsers[id] >= u.MaxRequestsPerUser {
+		u.redisService.Set(r.Context(), user)
+	}
+
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(user); err != nil {
 		log.Error("Cannot write user to response", sl.Err(err))
@@ -104,6 +126,7 @@ func (u *UsersHandler) GetUserByIdHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 }
+
 func (u *UsersHandler) InsertHandler(w http.ResponseWriter, r *http.Request) {
 	const op = "handlers.users.InsertHandler"
 	log := u.log.With("op", op)

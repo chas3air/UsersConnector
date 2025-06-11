@@ -43,7 +43,7 @@ func (a *App) Run() error {
 	redisService := userscashservice.New(a.log, a.redisStorage)
 
 	usersService := usersservice.New(a.log, a.psqlStorage)
-	usersHandler := usershandler.New(a.log, usersService, redisService)
+	usersHandler := usershandler.New(a.log, usersService, redisService, a.cfg.MaxRequestsPerUser)
 
 	authService := authservice.New(a.log, a.psqlStorage)
 	authHandler := authhandler.New(a.log, authService, redisService)
