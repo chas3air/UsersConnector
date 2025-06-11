@@ -3,6 +3,7 @@ package main
 import (
 	"api-gateway/internal/app"
 	grpcstorage "api-gateway/internal/storage/grpc/users"
+	userscashstorage "api-gateway/internal/storage/redis/users"
 	"api-gateway/pkg/config"
 	"api-gateway/pkg/lib/logger"
 	"os"
@@ -17,9 +18,10 @@ func main() {
 
 	log.Info("application configured")
 
-	connection := grpcstorage.New(log, os.Getenv("HOST"), os.Getenv("PORT"))
+	grpcConnection := grpcstorage.New(log, cfg.GrpcUsersAPIHost, cfg.GrpcUsersAPIPort)
+	redisConnection := userscashstorage.New(log, cfg.RedisHost, cfg.RedisPort, cfg.ExpirationTime)
 
-	application := app.New(cfg, log, connection)
+	application := app.New(cfg, log, grpcConnection, redisConnection)
 
 	go func() {
 		application.MustRun()
@@ -30,8 +32,11 @@ func main() {
 
 	<-stop
 
-	connection.Close()
-	log.Info("connection closed")
+	grpcConnection.Close()
+	log.Info("grpcConnection closed")
+
+	redisConnection.Close()
+	log.Info("redisConnection closed")
 
 	log.Info("application stoped")
 }

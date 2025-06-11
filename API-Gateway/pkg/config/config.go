@@ -8,8 +8,13 @@ import (
 )
 
 type Config struct {
-	Env  string `yaml:"env" env-default:"local"`
-	Port int    `yaml:"port"`
+	Env              string `yaml:"env" env-default:"local"`
+	Port             int    `yaml:"port" env:"PORT" env-default:"8080"`
+	ExpirationTime   int    `yaml:"expiration_time" env:"EXPIRATION_TIME" env-default:"10s"`
+	GrpcUsersAPIHost string `yaml:"grpc_users_api_host" env:"GRPC_USERS_API_HOST" env-default:"usersservice"`
+	GrpcUsersAPIPort int    `yaml:"grpc_users_api_port" env:"GRPC_USERS_API_PORT" env-default:"50051"`
+	RedisHost        string `yaml:"redis_host" env:"REDIS_HOST" env-default:"redis"`
+	RedisPort        int    `yaml:"redis_port" env:"REDIS_PORT" env-default:"6379"`
 }
 
 func MustLoad() *Config {

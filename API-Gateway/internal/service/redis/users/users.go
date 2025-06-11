@@ -30,7 +30,7 @@ func New(log *slog.Logger, storage UsersCashStorage) *UsersCashService {
 	}
 }
 
-func (u *UsersCashService) GetUser(ctx context.Context, id uuid.UUID) (models.User, error) {
+func (u *UsersCashService) Get(ctx context.Context, id uuid.UUID) (models.User, error) {
 	const op = "service.redis.users.Get"
 	log := u.log.With(
 		"op", op,

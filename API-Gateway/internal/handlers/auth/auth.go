@@ -15,21 +15,36 @@ import (
 
 const userRoleTitle = "user"
 
+// const adminRoleTitle = "admin"
+
+// var roleRating = map[string]int{
+// 	userRoleTitle: 4,
+// 	adminRoleTitle: 8,
+// }
+
 type IAuthService interface {
 	Login(ctx context.Context, login string, password []byte) (string, string, error)
 	Register(ctx context.Context, user models.User) (models.User, error)
 	IsAdmin(ctx context.Context, uid uuid.UUID) (bool, error)
 }
 
-type AuthHandler struct {
-	log     *slog.Logger
-	service IAuthService
+type IUserCashService interface {
+	Get(context.Context, uuid.UUID) (models.User, error)
+	Set(context.Context, models.User) error
+	Del(context.Context, uuid.UUID) error
 }
 
-func New(log *slog.Logger, service IAuthService) *AuthHandler {
+type AuthHandler struct {
+	log          *slog.Logger
+	service      IAuthService
+	redisService IUserCashService
+}
+
+func New(log *slog.Logger, service IAuthService, redisService IUserCashService) *AuthHandler {
 	return &AuthHandler{
-		log:     log,
-		service: service,
+		log:          log,
+		service:      service,
+		redisService: redisService,
 	}
 }
 

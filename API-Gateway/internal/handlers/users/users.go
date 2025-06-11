@@ -23,15 +23,23 @@ type IUsersService interface {
 	Delete(ctx context.Context, uid uuid.UUID) (models.User, error)
 }
 
-type UsersHandler struct {
-	log     *slog.Logger
-	service IUsersService
+type IUserCashService interface {
+	Get(context.Context, uuid.UUID) (models.User, error)
+	Set(context.Context, models.User) error
+	Del(context.Context, uuid.UUID) error
 }
 
-func New(log *slog.Logger, service IUsersService) *UsersHandler {
+type UsersHandler struct {
+	log          *slog.Logger
+	service      IUsersService
+	redisService IUserCashService
+}
+
+func New(log *slog.Logger, service IUsersService, redisService IUserCashService) *UsersHandler {
 	return &UsersHandler{
-		log:     log,
-		service: service,
+		log:          log,
+		service:      service,
+		redisService: redisService,
 	}
 }
 

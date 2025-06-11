@@ -12,16 +12,15 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-var ExpirationTime = 10
-
 type UsersCashStorage struct {
-	log *slog.Logger
-	rds *redis.Client
+	log            *slog.Logger
+	rds            *redis.Client
+	expirationTime int
 }
 
-func New(log *slog.Logger, connStr string) *UsersCashStorage {
+func New(log *slog.Logger, host string, port int, expirationTime int) *UsersCashStorage {
 	rds := redis.NewClient(&redis.Options{
-		Addr:     connStr,
+		Addr:     fmt.Sprintf("%s:%d", host, port),
 		Password: "",
 		DB:       0,
 	})
@@ -31,9 +30,14 @@ func New(log *slog.Logger, connStr string) *UsersCashStorage {
 	}
 
 	return &UsersCashStorage{
-		log: log,
-		rds: rds,
+		log:            log,
+		rds:            rds,
+		expirationTime: expirationTime,
 	}
+}
+
+func (u *UsersCashStorage) Close() {
+	u.rds.Close()
 }
 
 // Get implements userscashservice.UsersCashStorage.
@@ -79,6 +83,7 @@ func (u *UsersCashStorage) Set(ctx context.Context, user models.User) error {
 		ctx,
 		fmt.Sprintf("user:%s", user.Id.String()),
 		map[string]string{
+			"id":       user.Id.String(),
 			"login":    user.Login,
 			"password": string(user.Password),
 			"role":     user.Role,
@@ -92,7 +97,7 @@ func (u *UsersCashStorage) Set(ctx context.Context, user models.User) error {
 	_, err = u.rds.Expire(
 		ctx,
 		fmt.Sprintf("user:%s", user.Id.String()),
-		time.Duration(ExpirationTime),
+		time.Duration(u.expirationTime),
 	).Result()
 	if err != nil {
 		log.Warn("Cannot set expiration time for user"+user.Id.String(), sl.Err(err))

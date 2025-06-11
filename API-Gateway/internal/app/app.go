@@ -4,6 +4,7 @@ import (
 	authhandler "api-gateway/internal/handlers/auth"
 	usershandler "api-gateway/internal/handlers/users"
 	authservice "api-gateway/internal/service/auth"
+	userscashservice "api-gateway/internal/service/redis/users"
 	usersservice "api-gateway/internal/service/users"
 	grpcstorage "api-gateway/internal/storage/grpc/users"
 	"api-gateway/pkg/config"
@@ -15,16 +16,18 @@ import (
 )
 
 type App struct {
-	cfg     *config.Config
-	log     *slog.Logger
-	storage *grpcstorage.GRPCUsersStorage
+	cfg          *config.Config
+	log          *slog.Logger
+	psqlStorage  *grpcstorage.GRPCUsersStorage
+	redisStorage userscashservice.UsersCashStorage
 }
 
-func New(cfg *config.Config, log *slog.Logger, storage *grpcstorage.GRPCUsersStorage) *App {
+func New(cfg *config.Config, log *slog.Logger, storage *grpcstorage.GRPCUsersStorage, redisStorage userscashservice.UsersCashStorage) *App {
 	return &App{
-		cfg:     cfg,
-		log:     log,
-		storage: storage,
+		cfg:          cfg,
+		log:          log,
+		psqlStorage:  storage,
+		redisStorage: redisStorage,
 	}
 }
 
@@ -37,11 +40,13 @@ func (a *App) MustRun() {
 func (a *App) Run() error {
 	r := mux.NewRouter()
 
-	usersService := usersservice.New(a.log, a.storage)
-	usersHandler := usershandler.New(a.log, usersService)
+	redisService := userscashservice.New(a.log, a.redisStorage)
 
-	authService := authservice.New(a.log, a.storage)
-	authHandler := authhandler.New(a.log, authService)
+	usersService := usersservice.New(a.log, a.psqlStorage)
+	usersHandler := usershandler.New(a.log, usersService, redisService)
+
+	authService := authservice.New(a.log, a.psqlStorage)
+	authHandler := authhandler.New(a.log, authService, redisService)
 
 	r.HandleFunc("/api/v1/health-check", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("200 OK"))

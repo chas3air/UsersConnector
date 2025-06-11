@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"strconv"
 
 	umv1 "github.com/chas3air/protos/gen/go/usersManager"
 	"github.com/google/uuid"
@@ -20,8 +19,7 @@ type GRPCUsersStorage struct {
 	conn *grpc.ClientConn
 }
 
-func New(log *slog.Logger, host string, port_s string) *GRPCUsersStorage {
-	port, _ := strconv.Atoi(port_s)
+func New(log *slog.Logger, host string, port int) *GRPCUsersStorage {
 	conn, err := grpc.NewClient(
 		fmt.Sprintf("%s:%d", host, port),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
