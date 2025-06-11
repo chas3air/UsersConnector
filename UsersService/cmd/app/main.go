@@ -15,9 +15,9 @@ func main() {
 
 	log := logger.SetupLogger(cfg.Env)
 
-	storage := usersstorage.New(log, "mongodb://mongo_cont:27017")
+	storage := usersstorage.New(log, cfg.MongoDBHost, cfg.MongoDBPort, cfg.MongoDBDBName, cfg.MongoDBUsersCollection)
 
-	application := app.New(log, cfg.Grpc.Port, storage)
+	application := app.New(log, cfg.Port, storage)
 	go func() {
 		application.GRPCServer.MustRun()
 	}()

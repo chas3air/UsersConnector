@@ -18,13 +18,12 @@ import (
 )
 
 type UsersPsqlStorage struct {
-	log *slog.Logger
-	DB  *sql.DB
+	log       *slog.Logger
+	DB        *sql.DB
+	tableName string
 }
 
-const UsersTableName = "users"
-
-func New(log *slog.Logger, connStr string) *UsersPsqlStorage {
+func New(log *slog.Logger, connStr string, tableName string) *UsersPsqlStorage {
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		log.Error("Error connecting to database", sl.Err(err))
@@ -32,14 +31,15 @@ func New(log *slog.Logger, connStr string) *UsersPsqlStorage {
 	}
 
 	wd, _ := os.Getwd()
-	migrationPath := filepath.Join(wd, "migrations")
+	migrationPath := filepath.Join(wd, "app", "migrations")
 	if err := applyMigrations(db, migrationPath); err != nil {
 		panic(err)
 	}
 
 	return &UsersPsqlStorage{
-		log: log,
-		DB:  db,
+		log:       log,
+		DB:        db,
+		tableName: tableName,
 	}
 }
 
@@ -67,7 +67,7 @@ func (u *UsersPsqlStorage) GetUsers(ctx context.Context) ([]models.User, error) 
 	}
 
 	rows, err := u.DB.QueryContext(ctx, `
-		SELECT * FROM `+UsersTableName+`;
+		SELECT * FROM `+u.tableName+`;
 	`)
 	if err != nil {
 		log.Error("Error retrieving all users", sl.Err(err))
@@ -106,7 +106,7 @@ func (u *UsersPsqlStorage) GetUserById(ctx context.Context, uid uuid.UUID) (mode
 
 	var user models.User
 	err := u.DB.QueryRowContext(ctx, `
-		SELECT * FROM `+UsersTableName+`
+		SELECT * FROM `+u.tableName+`
 		WHERE id=$1;
 	`, uid).Scan(&user.Id, &user.Login, &user.Password, &user.Role)
 	if err != nil {
@@ -136,7 +136,7 @@ func (u *UsersPsqlStorage) Insert(ctx context.Context, user models.User) (models
 	}
 
 	_, err := u.DB.ExecContext(ctx, `
-		INSERT INTO `+UsersTableName+` (id, login, password, role)
+		INSERT INTO `+u.tableName+` (id, login, password, role)
 		VALUES ($1, $2, $3, $4);
 	`, user.Id, user.Login, user.Password, user.Role)
 	if err != nil {
@@ -166,7 +166,7 @@ func (u *UsersPsqlStorage) Update(ctx context.Context, uid uuid.UUID, user model
 	}
 
 	result, err := u.DB.ExecContext(ctx, `
-		UPDATE `+UsersTableName+`
+		UPDATE `+u.tableName+`
 		SET login=$1, password=$2, role=$3
 		WHERE id=$4;
 	`, user.Login, user.Password, user.Role, user.Id)
@@ -214,7 +214,7 @@ func (u *UsersPsqlStorage) Delete(ctx context.Context, uid uuid.UUID) (models.Us
 	}
 
 	_, err = u.DB.ExecContext(ctx, `
-		DELETE FROM `+UsersTableName+` 
+		DELETE FROM `+u.tableName+` 
 		WHERE id = $1;
 	`, uid)
 	if err != nil {

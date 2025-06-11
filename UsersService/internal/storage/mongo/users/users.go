@@ -17,13 +17,14 @@ import (
 type UsersMongoStorage struct {
 	log    *slog.Logger
 	client *mongo.Client
+	databaseName string
+	collectionName string
 }
 
-const UsersCollectionName = "users"
-const DatabaseName = "users"
-
-func New(log *slog.Logger, connStr string) *UsersMongoStorage {
-	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(connStr))
+func New(log *slog.Logger, host string, port int, databaseName string, collectionName string) *UsersMongoStorage {
+	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(
+		fmt.Sprintf("mongodb://%s:%d", host, port),
+	))
 	if err != nil {
 		panic(err)
 	}
@@ -35,6 +36,8 @@ func New(log *slog.Logger, connStr string) *UsersMongoStorage {
 	return &UsersMongoStorage{
 		log:    log,
 		client: client,
+		databaseName: databaseName,
+		collectionName: collectionName,
 	}
 }
 
@@ -57,7 +60,7 @@ func (u *UsersMongoStorage) GetUsers(ctx context.Context) ([]models.User, error)
 	default:
 	}
 
-	collection := u.client.Database(DatabaseName).Collection(UsersCollectionName)
+	collection := u.client.Database(u.databaseName).Collection(u.collectionName)
 	cursor, err := collection.Find(ctx, bson.M{})
 	if err != nil {
 		log.Error("Error fetching usres", sl.Err(err))
@@ -87,7 +90,7 @@ func (u *UsersMongoStorage) GetUserById(ctx context.Context, uid uuid.UUID) (mod
 	default:
 	}
 
-	collection := u.client.Database(DatabaseName).Collection(UsersCollectionName)
+	collection := u.client.Database(u.databaseName).Collection(u.collectionName)
 
 	var user models.User
 
@@ -113,7 +116,7 @@ func (u *UsersMongoStorage) Insert(ctx context.Context, user models.User) (model
 	default:
 	}
 
-	collection := u.client.Database(DatabaseName).Collection(UsersCollectionName)
+	collection := u.client.Database(u.databaseName).Collection(u.collectionName)
 
 	if err := collection.FindOne(ctx, bson.M{"id": user.Id}).Err(); err == nil {
 		log.Error("User already exists")
@@ -143,7 +146,7 @@ func (u *UsersMongoStorage) Update(ctx context.Context, uid uuid.UUID, user mode
 	default:
 	}
 
-	collection := u.client.Database(DatabaseName).Collection(UsersCollectionName)
+	collection := u.client.Database(u.databaseName).Collection(u.collectionName)
 
 	filter := bson.M{"id": uid}
 
@@ -174,7 +177,7 @@ func (u *UsersMongoStorage) Delete(ctx context.Context, uid uuid.UUID) (models.U
 	default:
 	}
 
-	collection := u.client.Database(DatabaseName).Collection(UsersCollectionName)
+	collection := u.client.Database(u.databaseName).Collection(u.collectionName)
 
 	filter := bson.M{"id": uid}
 

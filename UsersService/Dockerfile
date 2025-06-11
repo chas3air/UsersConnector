@@ -23,9 +23,9 @@ RUN mv /app/cli /cli
 RUN adduser -D appuser
 USER appuser
 
-WORKDIR /app
+WORKDIR /
 
 EXPOSE 50051
 
 # ENTRYPOINT ["tail", "-f", "/dev/null"]
-CMD ["./../cli", "--config=./config/config.yaml"]
+CMD ["./cli", "--config=/app/.env"]
