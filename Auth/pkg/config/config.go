@@ -9,9 +9,11 @@ import (
 )
 
 type Config struct {
-	Env            string        `yaml:"env" env-default:"local"`
-	Grpc           GrpcConfig    `yaml:"grpc"`
-	ExpirationTime time.Duration `yaml:"expiration_time"`
+	Env              string        `yaml:"env" env-default:"local"`
+	Grpc             GrpcConfig    `yaml:"grpc"`
+	ExpirationTime   time.Duration `yaml:"expiration_time"`
+	GrpcUsersAPIHost string        `yaml:"grpc_users_api_host" env:"GRPC_USERS_API_HOST" env-default:"usersservice"`
+	GrpcUsersAPIPort int           `yaml:"grpc_users_api_port" env:"GRPC_USERS_API_PORT" env-default:"50051"`
 }
 
 type GrpcConfig struct {

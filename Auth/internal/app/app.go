@@ -30,3 +30,4 @@ func New(log *slog.Logger, port int, storage IUsersStorage) *App {
 		GRPCServer: grpcApp,
 	}
 }
+

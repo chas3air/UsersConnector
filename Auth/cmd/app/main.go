@@ -1,6 +1,8 @@
 package main
 
 import (
+	"auth/internal/app"
+	grpcusers "auth/internal/storage/grpc/users"
 	"auth/pkg/config"
 	"auth/pkg/lib/logger"
 	"os"
@@ -13,12 +15,12 @@ func main() {
 
 	log := logger.SetupLogger(cfg.Env)
 
-	storage := grpcusers.New(log, os.Getenv("USERS_HOST"), os.Getenv("USERS_PORT"))
+	usersConnection := grpcusers.New(log, cfg.GrpcUsersAPIHost, cfg.GrpcUsersAPIPort)
 
-	// application := app.New(cfg, log, storage)
+	application := app.New(log, cfg.Grpc.Port, usersConnection)
 
 	go func() {
-		application.MustRun()
+		application.GRPCServer.MustRun()
 	}()
 
 	stop := make(chan os.Signal, 1)
@@ -26,7 +28,7 @@ func main() {
 
 	<-stop
 
-	storage.Close()
+	usersConnection.Close()
 
 	application.GRPCServer.Stop()
 }
