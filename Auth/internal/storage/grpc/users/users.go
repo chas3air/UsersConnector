@@ -3,6 +3,7 @@ package grpcusers
 import (
 	"auth/internal/domain/models"
 	umprofiles "auth/internal/profiles/um"
+	storageerrors "auth/internal/storage"
 	"auth/pkg/lib/logger/sl"
 	"context"
 	"fmt"
@@ -11,7 +12,9 @@ import (
 	umv1 "github.com/chas3air/protos/gen/go/usersManager"
 	"github.com/google/uuid"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/status"
 )
 
 type GRPCUsersStorage struct {
@@ -93,8 +96,22 @@ func (s *GRPCUsersStorage) GetUserById(ctx context.Context, uid uuid.UUID) (mode
 		Id: uid.String(),
 	})
 	if err != nil {
-		log.Error("Failed to get user by id", sl.Err(err))
-		return models.User{}, fmt.Errorf("%s: %w", op, err)
+		if st, ok := status.FromError(err); ok {
+			switch st.Code() {
+			case codes.DeadlineExceeded:
+				log.Warn("Deadline exceeded", sl.Err(storageerrors.ErrDeadlineExceeded))
+				return models.User{}, fmt.Errorf("%s: %w", op, storageerrors.ErrDeadlineExceeded)
+			case codes.InvalidArgument:
+				log.Warn("Invalid argument", sl.Err(storageerrors.ErrInvalidArgument))
+				return models.User{}, fmt.Errorf("%s: %w", op, storageerrors.ErrInvalidArgument)
+			case codes.NotFound:
+				log.Warn("User not found", sl.Err(storageerrors.ErrNotFound))
+				return models.User{}, fmt.Errorf("%s: %w", op, storageerrors.ErrNotFound)
+			default:
+				log.Error("Cannot retrieve user by id", sl.Err(err))
+				return models.User{}, fmt.Errorf("%s; %w", op, err)
+			}
+		}
 	}
 
 	convertedUser, err := umprofiles.ProtoUsrToUsr(res.GetUser())
@@ -124,8 +141,22 @@ func (s *GRPCUsersStorage) Insert(ctx context.Context, userForInsert models.User
 		User: umprofiles.UsrToProtoUsr(userForInsert),
 	})
 	if err != nil {
-		log.Error("Failed to insert user", sl.Err(err))
-		return models.User{}, fmt.Errorf("%s: %w", op, err)
+		if st, ok := status.FromError(err); ok {
+			switch st.Code() {
+			case codes.DeadlineExceeded:
+				log.Warn("Deadline exceeded", sl.Err(storageerrors.ErrDeadlineExceeded))
+				return models.User{}, fmt.Errorf("%s: %w", op, storageerrors.ErrDeadlineExceeded)
+			case codes.InvalidArgument:
+				log.Warn("Invalid argument", sl.Err(storageerrors.ErrInvalidArgument))
+				return models.User{}, fmt.Errorf("%s: %w", op, storageerrors.ErrInvalidArgument)
+			case codes.AlreadyExists:
+				log.Warn("User already exists", sl.Err(storageerrors.ErrAlreadyExists))
+				return models.User{}, fmt.Errorf("%s: %w", op, storageerrors.ErrAlreadyExists)
+			default:
+				log.Error("Cannot retrieve user by id", sl.Err(err))
+				return models.User{}, fmt.Errorf("%s; %w", op, err)
+			}
+		}
 	}
 
 	insertedUser, err := umprofiles.ProtoUsrToUsr(res.GetUser())
@@ -136,65 +167,3 @@ func (s *GRPCUsersStorage) Insert(ctx context.Context, userForInsert models.User
 	return insertedUser, nil
 }
 
-// Update implements users.IUsersStorage.
-func (s *GRPCUsersStorage) Update(ctx context.Context, uid uuid.UUID, userForUpdate models.User) (models.User, error) {
-	const op = "storage.grpc.users.Update"
-	log := s.log.With(
-		"op", op,
-	)
-
-	select {
-	case <-ctx.Done():
-		return models.User{}, fmt.Errorf("%s: %w", op, ctx.Err())
-	default:
-	}
-
-	c := umv1.NewUsersManagerClient(s.conn)
-	res, err := c.Update(ctx, &umv1.UpdateRequest{
-		Id:   uid.String(),
-		User: umprofiles.UsrToProtoUsr(userForUpdate),
-	})
-	if err != nil {
-		log.Error("Failed to update user", sl.Err(err))
-		return models.User{}, fmt.Errorf("%s: %w", op, err)
-	}
-
-	updatedUser, err := umprofiles.ProtoUsrToUsr(res.GetUser())
-	if err != nil {
-		log.Error("Error converting user", sl.Err(err))
-		return models.User{}, fmt.Errorf("%s: %w", op, err)
-	}
-
-	return updatedUser, nil
-}
-
-// Delete implements users.IUsersStorage.
-func (s *GRPCUsersStorage) Delete(ctx context.Context, uid uuid.UUID) (models.User, error) {
-	const op = "storage.grpc.users.Delete"
-	log := s.log.With(
-		"op", op,
-	)
-
-	select {
-	case <-ctx.Done():
-		return models.User{}, fmt.Errorf("%s: %w", op, ctx.Err())
-	default:
-	}
-
-	c := umv1.NewUsersManagerClient(s.conn)
-	res, err := c.Delete(ctx, &umv1.DeleteRequest{
-		Id: uid.String(),
-	})
-	if err != nil {
-		log.Error("Failed to delete user", sl.Err(err))
-		return models.User{}, fmt.Errorf("%s: %w", op, err)
-	}
-
-	deletedUSer, err := umprofiles.ProtoUsrToUsr(res.GetUser())
-	if err != nil {
-		log.Error("Error converting user", sl.Err(err))
-		return models.User{}, fmt.Errorf("%s: %w", op, err)
-	}
-
-	return deletedUSer, nil
-}

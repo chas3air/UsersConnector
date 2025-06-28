@@ -19,7 +19,7 @@ type App struct {
 }
 
 type IAuthService interface {
-	Login(ctx context.Context, login string, password []byte) (string, string, error)
+	Login(ctx context.Context, login string, password string) (string, string, error)
 	Register(ctx context.Context, user models.User) (models.User, error)
 	IsAdmin(ctx context.Context, uid uuid.UUID) (bool, error)
 }
