@@ -2,10 +2,13 @@ package config
 
 import (
 	"flag"
+	"fmt"
+	"log"
 	"os"
 	"time"
 
 	"github.com/ilyakaznacheev/cleanenv"
+	"github.com/joho/godotenv"
 )
 
 type Config struct {
@@ -26,6 +29,21 @@ func MustLoad() *Config {
 	}
 
 	return MustLoadPath(configPath)
+}
+
+func MustLoadEnv() *Config {
+	if err := godotenv.Load(); err != nil {
+		fmt.Println(os.Getwd())
+		log.Println("Error loading .env file")
+	}
+
+	var cfg Config
+
+	if err := cleanenv.ReadEnv(&cfg); err != nil {
+		panic("cannot read config from environment: " + err.Error())
+	}
+
+	return &cfg
 }
 
 func MustLoadPath(configPath string) *Config {

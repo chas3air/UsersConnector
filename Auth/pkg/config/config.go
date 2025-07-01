@@ -2,23 +2,19 @@ package config
 
 import (
 	"flag"
+	"fmt"
+	"log"
 	"os"
-	"time"
 
 	"github.com/ilyakaznacheev/cleanenv"
+	"github.com/joho/godotenv"
 )
 
 type Config struct {
-	Env              string        `yaml:"env" env-default:"local"`
-	Grpc             GrpcConfig    `yaml:"grpc"`
-	ExpirationTime   time.Duration `yaml:"expiration_time"`
-	GrpcUsersAPIHost string        `yaml:"grpc_users_api_host" env:"GRPC_USERS_API_HOST" env-default:"usersservice"`
-	GrpcUsersAPIPort int           `yaml:"grpc_users_api_port" env:"GRPC_USERS_API_PORT" env-default:"50051"`
-}
-
-type GrpcConfig struct {
-	Port    int           `yaml:"port"`
-	Timeout time.Duration `yaml:"timeout"`
+	Env              string `yaml:"env" env-default:"local"`
+	Port             int    `yaml:"port" env:"PORT" env-default:"50051"`
+	GrpcUsersAPIHost string `yaml:"grpc_users_api_host" env:"GRPC_USERS_API_HOST" env-default:"usersservice"`
+	GrpcUsersAPIPort int    `yaml:"grpc_users_api_port" env:"GRPC_USERS_API_PORT" env-default:"50051"`
 }
 
 func MustLoad() *Config {
@@ -28,6 +24,21 @@ func MustLoad() *Config {
 	}
 
 	return MustLoadPath(configPath)
+}
+
+func MustLoadEnv() *Config {
+	if err := godotenv.Load(); err != nil {
+		fmt.Println(os.Getwd())
+		log.Println("Error loading .env file")
+	}
+
+	var cfg Config
+
+	if err := cleanenv.ReadEnv(&cfg); err != nil {
+		panic("cannot read config from environment: " + err.Error())
+	}
+
+	return &cfg
 }
 
 func MustLoadPath(configPath string) *Config {

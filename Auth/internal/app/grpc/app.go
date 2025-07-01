@@ -60,7 +60,7 @@ func (a *App) Run() error {
 		return err
 	}
 
-	log.Info("app started")
+	log.Info("application started")
 
 	return nil
 }

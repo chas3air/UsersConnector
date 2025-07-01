@@ -57,11 +57,10 @@ func (a *AuthService) Login(ctx context.Context, login string, password string) 
 		}
 	}
 	if loggedUser.Login == "undef" {
-		log.Error("User doesn't exists", sl.Err(err))
+		log.Error("User doesn't exists")
 		return "", "", fmt.Errorf("%s: %w", op, errors.New("user doesn't exists"))
 	}
 
-	// генерация токенов
 	accessToken, refreshToken, err := "", "", nil
 	return accessToken, refreshToken, nil
 }
