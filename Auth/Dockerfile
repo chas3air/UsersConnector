@@ -28,4 +28,4 @@ WORKDIR /app
 EXPOSE 50051
 
 # ENTRYPOINT ["tail", "-f", "/dev/null"]
-CMD ["./../cli", "--config=./config/config.yaml"]
+CMD ["./../cli"]

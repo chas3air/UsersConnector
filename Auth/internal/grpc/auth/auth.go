@@ -82,8 +82,33 @@ func (s *serverAPI) Register(ctx context.Context, req *authv1.RegisterRequest) (
 		return nil, status.Error(codes.InvalidArgument, "Invalid argument")
 	}
 
+	createdUser, err := s.service.Register(ctx, userforRegister)
+	if err != nil {
+		switch {
+		case errors.Is(err, serviceerrors.ErrDeadlineExceeded):
+			log.Warn("Deadline exceeded", sl.Err(serviceerrors.ErrDeadlineExceeded))
+			return nil, status.Error(codes.DeadlineExceeded, "deadline exceeded")
+
+		case errors.Is(err, serviceerrors.ErrInvalidArgument):
+			log.Warn("Invalid argument", sl.Err(serviceerrors.ErrInvalidArgument))
+			return nil, status.Error(codes.InvalidArgument, "invalid argument")
+
+		case errors.Is(err, serviceerrors.ErrAlreadyExists):
+			log.Warn("User already exists", sl.Err(serviceerrors.ErrAlreadyExists))
+			return nil, status.Error(codes.AlreadyExists, "user already exists")
+
+		case errors.Is(err, serviceerrors.ErrNotFound):
+			log.Warn("User not found", sl.Err(serviceerrors.ErrNotFound))
+			return nil, status.Error(codes.NotFound, "user not found")
+
+		default:
+			log.Error("Cannot register user", sl.Err(err))
+			return nil, status.Error(codes.Internal, "cannot register user")
+		}
+	}
+
 	return &authv1.RegisterResponse{
-		User: amprofiles.UsrToProtoUsr(userforRegister),
+		User: amprofiles.UsrToProtoUsr(createdUser),
 	}, nil
 }
 

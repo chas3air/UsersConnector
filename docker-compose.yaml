@@ -65,6 +65,17 @@ services:
       - HOST=UsersService
       - PORT=50051
 
+  auth:
+    build:
+      context: "./Auth"
+    container_name: auth
+    ports:
+      - 6001:50051
+    depends_on:
+      - users_service
+    networks:
+      - work_net
+
 networks:
   work_net:
 
