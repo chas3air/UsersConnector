@@ -2,6 +2,7 @@ package authservice
 
 import (
 	"auth/internal/domain/models"
+	"auth/internal/lib/jwt"
 	serviceerrors "auth/internal/service"
 	storageerrors "auth/internal/storage"
 	"auth/pkg/lib/logger/sl"
@@ -61,7 +62,12 @@ func (a *AuthService) Login(ctx context.Context, login string, password string) 
 		return "", "", fmt.Errorf("%s: %w", op, errors.New("user doesn't exists"))
 	}
 
-	accessToken, refreshToken, err := "", "", nil
+	accessToken, refreshToken, err := jwt.GenerateTokens(loggedUser)
+	if err != nil {
+		log.Error("Failed to generate tokens", sl.Err(err))
+		return "", "", fmt.Errorf("%s: %w", op, err)
+	}
+
 	return accessToken, refreshToken, nil
 }
 
