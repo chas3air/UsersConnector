@@ -2,9 +2,12 @@ package config
 
 import (
 	"flag"
+	"fmt"
+	"log"
 	"os"
 
 	"github.com/ilyakaznacheev/cleanenv"
+	"github.com/joho/godotenv"
 )
 
 type Config struct {
@@ -14,8 +17,8 @@ type Config struct {
 	MongoDBPort            int    `yaml:"mongodb_port" env:"MONGODB_PORT" env-default:"27017"`
 	MongoDBDBName          string `yaml:"mongodb_db_name" env:"MONGODB_DB_NAME" env-default:"users"`
 	MongoDBUsersCollection string `yaml:"mongodb_users_collection_name" env:"MONGODB_USERS_COLLECTION_NAME" env-default:"users"`
-	PostgresHost           string `yaml:"psql_host" env:"PSQL_HOST" env-default:"psql_cont"`
-	PostgresPort           int    `yaml:"psql_port" env:"PSQL_PORT" env-default:"5432"`
+	PsqlConnStr            string `yaml:"psql_conn_str" env:"PSQL_CONN_STR"`
+	PsqlUsersTableName     string `yaml:"psql_users_table_name" env:"PSQL_USERS_TABLE_NAME"`
 }
 
 func MustLoad() *Config {
@@ -25,6 +28,22 @@ func MustLoad() *Config {
 	}
 
 	return MustLoadPath(configPath)
+}
+
+func MustLoadEnv() *Config {
+	if err := godotenv.Load(); err != nil {
+		fmt.Println(os.Getwd())
+		log.Println("Error loading .env file")
+		panic(err)
+	}
+
+	var cfg Config
+
+	if err := cleanenv.ReadEnv(&cfg); err != nil {
+		panic("cannot read config from environment: " + err.Error())
+	}
+
+	return &cfg
 }
 
 func MustLoadPath(configPath string) *Config {

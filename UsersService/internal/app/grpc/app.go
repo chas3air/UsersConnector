@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log/slog"
 	"net"
-	usersgrpc "usersservice/grpc/users"
 	"usersservice/internal/domain/models"
+	usersgrpc "usersservice/internal/grpc/users"
 
 	"github.com/google/uuid"
 	"google.golang.org/grpc"

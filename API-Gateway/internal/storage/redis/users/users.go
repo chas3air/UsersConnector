@@ -136,7 +136,7 @@ func mapToUser(mappedUser map[string]string) models.User {
 	return models.User{
 		Id:       id,
 		Login:    mappedUser["login"],
-		Password: []byte(mappedUser["password"]),
+		Password: mappedUser["password"],
 		Role:     mappedUser["role"],
 	}
 }

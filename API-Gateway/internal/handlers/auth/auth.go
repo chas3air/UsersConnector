@@ -15,36 +15,21 @@ import (
 
 const userRoleTitle = "user"
 
-// const adminRoleTitle = "admin"
-
-// var roleRating = map[string]int{
-// 	userRoleTitle: 4,
-// 	adminRoleTitle: 8,
-// }
-
 type IAuthService interface {
-	Login(ctx context.Context, login string, password []byte) (string, string, error)
+	Login(ctx context.Context, login string, password string) (string, string, error)
 	Register(ctx context.Context, user models.User) (models.User, error)
 	IsAdmin(ctx context.Context, uid uuid.UUID) (bool, error)
 }
 
-type IUserCashService interface {
-	Get(context.Context, uuid.UUID) (models.User, error)
-	Set(context.Context, models.User) error
-	Del(context.Context, uuid.UUID) error
-}
-
 type AuthHandler struct {
-	log          *slog.Logger
-	service      IAuthService
-	redisService IUserCashService
+	log     *slog.Logger
+	service IAuthService
 }
 
-func New(log *slog.Logger, service IAuthService, redisService IUserCashService) *AuthHandler {
+func New(log *slog.Logger, service IAuthService) *AuthHandler {
 	return &AuthHandler{
-		log:          log,
-		service:      service,
-		redisService: redisService,
+		log:     log,
+		service: service,
 	}
 }
 
@@ -56,7 +41,7 @@ func (a *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	var loginStruct = struct {
 		Login    string `json:"login"`
-		Password []byte `json:"password"`
+		Password string `json:"password"`
 	}{}
 
 	if err := json.NewDecoder(r.Body).Decode(&loginStruct); err != nil {
@@ -65,7 +50,7 @@ func (a *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accessToken, refreshToken, err := a.service.Login(r.Context(), loginStruct.Login, loginStruct.Password)
+	accessToken, _, err := a.service.Login(r.Context(), loginStruct.Login, loginStruct.Password)
 	if err != nil {
 		if errors.Is(err, serviceerror.ErrNotFound) {
 			log.Warn("User not found", sl.Err(err))
@@ -79,11 +64,9 @@ func (a *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	tokenResponse := struct {
-		AccessToken  string `json:"access_token"`
-		RefreshToken string `json:"refresh_token"`
+		AccessToken string `json:"access_token"`
 	}{
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
+		AccessToken: accessToken,
 	}
 
 	w.WriteHeader(http.StatusOK)
