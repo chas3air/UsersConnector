@@ -15,13 +15,6 @@ import (
 
 const userRoleTitle = "user"
 
-// const adminRoleTitle = "admin"
-
-// var roleRating = map[string]int{
-// 	userRoleTitle: 4,
-// 	adminRoleTitle: 8,
-// }
-
 type IAuthService interface {
 	Login(ctx context.Context, login string, password string) (string, string, error)
 	Register(ctx context.Context, user models.User) (models.User, error)
@@ -65,7 +58,7 @@ func (a *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accessToken, refreshToken, err := a.service.Login(r.Context(), loginStruct.Login, loginStruct.Password)
+	accessToken, _, err := a.service.Login(r.Context(), loginStruct.Login, loginStruct.Password)
 	if err != nil {
 		if errors.Is(err, serviceerror.ErrNotFound) {
 			log.Warn("User not found", sl.Err(err))
@@ -79,11 +72,9 @@ func (a *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	tokenResponse := struct {
-		AccessToken  string `json:"access_token"`
-		RefreshToken string `json:"refresh_token"`
+		AccessToken string `json:"access_token"`
 	}{
-		AccessToken:  accessToken,
-		RefreshToken: refreshToken,
+		AccessToken: accessToken,
 	}
 
 	w.WriteHeader(http.StatusOK)

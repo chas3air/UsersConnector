@@ -40,6 +40,7 @@ func MustLoadEnv() *Config {
 	if err := godotenv.Load(); err != nil {
 		fmt.Println(os.Getwd())
 		log.Println("Error loading .env file")
+		panic(err)
 	}
 
 	var cfg Config

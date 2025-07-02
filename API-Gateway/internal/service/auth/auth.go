@@ -2,6 +2,7 @@ package authservice
 
 import (
 	"api-gateway/internal/domain/models"
+	"api-gateway/pkg/lib/logger/sl"
 	"context"
 	"fmt"
 	"log/slog"
@@ -17,21 +18,23 @@ type IUsersStorage interface {
 	Delete(ctx context.Context, uid uuid.UUID) (models.User, error)
 }
 
-type IAuthStorage interface {
+type IAuthServer interface {
 	Login(ctx context.Context, login string, password string) (string, string, error)
 	Register(ctx context.Context, user models.User) (models.User, error)
 	IsAdmin(ctx context.Context, uid uuid.UUID) (bool, error)
 }
 
 type AuthService struct {
-	log     *slog.Logger
-	storage IUsersStorage
+	log         *slog.Logger
+	userStorage IUsersStorage
+	authServer  IAuthServer
 }
 
-func New(log *slog.Logger, storage IUsersStorage) *AuthService {
+func New(log *slog.Logger, userStorage IUsersStorage, authServer IAuthServer) *AuthService {
 	return &AuthService{
-		log:     log,
-		storage: storage,
+		log:         log,
+		userStorage: userStorage,
+		authServer:  authServer,
 	}
 }
 
@@ -49,7 +52,17 @@ func (a *AuthService) Login(ctx context.Context, login string, password string) 
 	default:
 	}
 
-	return "", "", nil
+	accessToken, refreshToken, err := a.authServer.Login(ctx, login, password)
+	if err != nil {
+		log.Error("Cannot login", sl.Err(err))
+		return "", "", fmt.Errorf("%s: %w", op, err)
+	}
+
+	// занос токенов в кеш
+	_ = accessToken
+	_ = refreshToken
+
+	return accessToken, "", nil
 }
 
 // Register implements auth.IAuthService.
@@ -66,7 +79,13 @@ func (a *AuthService) Register(ctx context.Context, userForRegister models.User)
 	default:
 	}
 
-	return models.User{}, nil
+	registeredUser, err := a.authServer.Register(ctx, userForRegister)
+	if err != nil {
+		log.Error("Cannot register", sl.Err(err))
+		return models.User{}, fmt.Errorf("%s: %w", op, err)
+	}
+
+	return registeredUser, nil
 }
 
 // IsAdmin implements auth.IAuthService.
@@ -83,5 +102,11 @@ func (a *AuthService) IsAdmin(ctx context.Context, uid uuid.UUID) (bool, error) 
 	default:
 	}
 
-	return false, nil
+	isAdmin, err := a.authServer.IsAdmin(ctx, uid)
+	if err != nil {
+		log.Error("Cannot check is an user admin", sl.Err(err))
+		return false, fmt.Errorf("%s: %w", op, err)
+	}
+
+	return isAdmin, nil
 }
