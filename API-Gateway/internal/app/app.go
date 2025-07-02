@@ -6,6 +6,7 @@ import (
 	authservice "api-gateway/internal/service/auth"
 	userscashservice "api-gateway/internal/service/redis/users"
 	usersservice "api-gateway/internal/service/users"
+	grpcauthserver "api-gateway/internal/storage/grpc/auth"
 	grpcstorage "api-gateway/internal/storage/grpc/users"
 	"api-gateway/pkg/config"
 	"fmt"
@@ -19,14 +20,16 @@ type App struct {
 	cfg          *config.Config
 	log          *slog.Logger
 	psqlStorage  *grpcstorage.GRPCUsersStorage
+	authServer   *grpcauthserver.GRPCAuthServer
 	redisStorage userscashservice.UsersCashStorage
 }
 
-func New(cfg *config.Config, log *slog.Logger, storage *grpcstorage.GRPCUsersStorage, redisStorage userscashservice.UsersCashStorage) *App {
+func New(cfg *config.Config, log *slog.Logger, storage *grpcstorage.GRPCUsersStorage, authServer *grpcauthserver.GRPCAuthServer, redisStorage userscashservice.UsersCashStorage) *App {
 	return &App{
 		cfg:          cfg,
 		log:          log,
 		psqlStorage:  storage,
+		authServer:   authServer,
 		redisStorage: redisStorage,
 	}
 }
@@ -51,10 +54,10 @@ func (a *App) Run() error {
 	r.HandleFunc("/api/v1/health-check", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("200 OK"))
 	})
-	r.HandleFunc("/api/v1/login", authHandler.LoginHandler)
-	r.HandleFunc("/api/v1/register", authHandler.RegisterHandler)
-	r.HandleFunc("/api/v1/refresh", authHandler.RefreshTokenHandler)
-	r.HandleFunc("/api/v1/logout", authHandler.LoginHandler)
+	r.HandleFunc("/api/v1/login", authHandler.LoginHandler).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/register", authHandler.RegisterHandler).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/refresh", authHandler.RefreshTokenHandler).Methods(http.MethodPost)
+	r.HandleFunc("/api/v1/logout", authHandler.LoginHandler).Methods(http.MethodPost)
 
 	r.HandleFunc("/api/v1/users", usersHandler.GetUsersHandler).Methods(http.MethodGet)
 	r.HandleFunc("/api/v1/users/{id}", usersHandler.GetUserByIdHandler).Methods(http.MethodGet)

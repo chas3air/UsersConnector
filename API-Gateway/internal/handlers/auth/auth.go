@@ -23,7 +23,7 @@ const userRoleTitle = "user"
 // }
 
 type IAuthService interface {
-	Login(ctx context.Context, login string, password []byte) (string, string, error)
+	Login(ctx context.Context, login string, password string) (string, string, error)
 	Register(ctx context.Context, user models.User) (models.User, error)
 	IsAdmin(ctx context.Context, uid uuid.UUID) (bool, error)
 }
@@ -56,7 +56,7 @@ func (a *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	var loginStruct = struct {
 		Login    string `json:"login"`
-		Password []byte `json:"password"`
+		Password string `json:"password"`
 	}{}
 
 	if err := json.NewDecoder(r.Body).Decode(&loginStruct); err != nil {
