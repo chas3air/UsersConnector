@@ -21,23 +21,15 @@ type IAuthService interface {
 	IsAdmin(ctx context.Context, uid uuid.UUID) (bool, error)
 }
 
-type IUserCashService interface {
-	Get(context.Context, uuid.UUID) (models.User, error)
-	Set(context.Context, models.User) error
-	Del(context.Context, uuid.UUID) error
-}
-
 type AuthHandler struct {
-	log          *slog.Logger
-	service      IAuthService
-	redisService IUserCashService
+	log     *slog.Logger
+	service IAuthService
 }
 
-func New(log *slog.Logger, service IAuthService, redisService IUserCashService) *AuthHandler {
+func New(log *slog.Logger, service IAuthService) *AuthHandler {
 	return &AuthHandler{
-		log:          log,
-		service:      service,
-		redisService: redisService,
+		log:     log,
+		service: service,
 	}
 }
 

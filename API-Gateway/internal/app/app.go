@@ -65,8 +65,8 @@ func (a *App) Run() error {
 	usersHandler := usershandler.New(a.log, usersService, redisService, a.cfg.MaxRequestsPerUser)
 	a.log.Info("usersHandler done")
 
-	authService := authservice.New(a.log, a.psqlStorage, a.authServer)
-	authHandler := authhandler.New(a.log, authService, redisService)
+	authService := authservice.New(a.log, a.authServer)
+	authHandler := authhandler.New(a.log, authService)
 	a.log.Info("authHandler done")
 
 	r.HandleFunc("/api/v1/health-check", func(w http.ResponseWriter, r *http.Request) {

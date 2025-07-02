@@ -25,16 +25,14 @@ type IAuthServer interface {
 }
 
 type AuthService struct {
-	log         *slog.Logger
-	userStorage IUsersStorage
-	authServer  IAuthServer
+	log        *slog.Logger
+	authServer IAuthServer
 }
 
-func New(log *slog.Logger, userStorage IUsersStorage, authServer IAuthServer) *AuthService {
+func New(log *slog.Logger, authServer IAuthServer) *AuthService {
 	return &AuthService{
-		log:         log,
-		userStorage: userStorage,
-		authServer:  authServer,
+		log:        log,
+		authServer: authServer,
 	}
 }
 
@@ -58,7 +56,6 @@ func (a *AuthService) Login(ctx context.Context, login string, password string) 
 		return "", "", fmt.Errorf("%s: %w", op, err)
 	}
 
-	// занос токенов в кеш
 	_ = accessToken
 	_ = refreshToken
 
