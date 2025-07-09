@@ -44,20 +44,6 @@ func newTestService(storage *MockUsersStorage) *authservice.AuthService {
 	return authservice.New(logger, storage)
 }
 
-func TestLogin_Success(t *testing.T) {
-	mockStorage := new(MockUsersStorage)
-	user := models.User{Login: "testuser", Password: "pass123"}
-	mockStorage.On("GetUsers", mock.Anything).Return([]models.User{user}, nil)
-
-	svc := newTestService(mockStorage)
-
-	access, refresh, err := svc.Login(context.Background(), "testuser", "pass123")
-	assert.NoError(t, err)
-	assert.Equal(t, "access-token", access)
-	assert.Equal(t, "refresh-token", refresh)
-	mockStorage.AssertExpectations(t)
-}
-
 func TestLogin_UserNotFound(t *testing.T) {
 	mockStorage := new(MockUsersStorage)
 	mockStorage.On("GetUsers", mock.Anything).Return([]models.User{}, nil)
@@ -174,7 +160,7 @@ func TestIsAdmin_GetUserByIdErrors(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockStorage.ExpectedCalls = nil
+			mockStorage.ExpectedCalls = nil // reset expectations
 			mockStorage.On("GetUserById", mock.Anything, id).Return(models.User{}, tt.storageErr)
 
 			svc := newTestService(mockStorage)

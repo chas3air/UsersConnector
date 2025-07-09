@@ -22,25 +22,25 @@ type IAuthService interface {
 	IsAdmin(ctx context.Context, uid uuid.UUID) (bool, error)
 }
 
-type serverAPI struct {
+type ServerAPI struct {
 	authv1.UnimplementedAuthServer
-	service IAuthService
-	log     *slog.Logger
+	Service IAuthService
+	Log     *slog.Logger
 }
 
 func Register(grpc *grpc.Server, service IAuthService, log *slog.Logger) {
 	authv1.RegisterAuthServer(
 		grpc,
-		&serverAPI{
-			service: service,
-			log:     log,
+		&ServerAPI{
+			Service: service,
+			Log:     log,
 		},
 	)
 }
 
-func (s *serverAPI) Login(ctx context.Context, req *authv1.LoginRequest) (*authv1.LoginResponse, error) {
+func (s *ServerAPI) Login(ctx context.Context, req *authv1.LoginRequest) (*authv1.LoginResponse, error) {
 	const op = "grpc.auth.Login"
-	log := s.log.With(
+	log := s.Log.With(
 		"op", op,
 	)
 
@@ -51,7 +51,7 @@ func (s *serverAPI) Login(ctx context.Context, req *authv1.LoginRequest) (*authv
 	default:
 	}
 
-	accessToken, refreshToken, err := s.service.Login(ctx, req.GetEmail(), req.GetPassword())
+	accessToken, refreshToken, err := s.Service.Login(ctx, req.GetEmail(), req.GetPassword())
 	if err != nil {
 		log.Error("Cannot generate token", sl.Err(err))
 		return nil, status.Error(codes.Internal, "Cannot generate token")
@@ -63,9 +63,9 @@ func (s *serverAPI) Login(ctx context.Context, req *authv1.LoginRequest) (*authv
 	}, nil
 }
 
-func (s *serverAPI) Register(ctx context.Context, req *authv1.RegisterRequest) (*authv1.RegisterResponse, error) {
+func (s *ServerAPI) Register(ctx context.Context, req *authv1.RegisterRequest) (*authv1.RegisterResponse, error) {
 	const op = "grpc.auth.Register"
-	log := s.log.With(
+	log := s.Log.With(
 		"op", op,
 	)
 
@@ -82,7 +82,7 @@ func (s *serverAPI) Register(ctx context.Context, req *authv1.RegisterRequest) (
 		return nil, status.Error(codes.InvalidArgument, "Invalid argument")
 	}
 
-	createdUser, err := s.service.Register(ctx, userforRegister)
+	createdUser, err := s.Service.Register(ctx, userforRegister)
 	if err != nil {
 		switch {
 		case errors.Is(err, serviceerrors.ErrDeadlineExceeded):
@@ -112,9 +112,9 @@ func (s *serverAPI) Register(ctx context.Context, req *authv1.RegisterRequest) (
 	}, nil
 }
 
-func (s *serverAPI) IsAdmin(ctx context.Context, req *authv1.IsAdminRequest) (*authv1.IsAdminResponse, error) {
+func (s *ServerAPI) IsAdmin(ctx context.Context, req *authv1.IsAdminRequest) (*authv1.IsAdminResponse, error) {
 	const op = "grpc.auth.IsAdmin"
-	log := s.log.With(
+	log := s.Log.With(
 		"op", op,
 	)
 
@@ -131,7 +131,7 @@ func (s *serverAPI) IsAdmin(ctx context.Context, req *authv1.IsAdminRequest) (*a
 		return nil, status.Error(codes.InvalidArgument, "Invalid id")
 	}
 
-	isAdmin, err := s.service.IsAdmin(ctx, id)
+	isAdmin, err := s.Service.IsAdmin(ctx, id)
 	if err != nil {
 		if errors.Is(err, serviceerrors.ErrDeadlineExceeded) {
 			log.Warn("Deadline exceeded", sl.Err(serviceerrors.ErrDeadlineExceeded))
