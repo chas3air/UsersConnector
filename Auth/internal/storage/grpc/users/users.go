@@ -18,7 +18,7 @@ import (
 )
 
 type GRPCUsersStorage struct {
-	log  *slog.Logger
+	Log  *slog.Logger
 	conn *grpc.ClientConn
 }
 
@@ -33,7 +33,7 @@ func New(log *slog.Logger, host string, port int) *GRPCUsersStorage {
 	}
 
 	return &GRPCUsersStorage{
-		log:  log,
+		Log:  log,
 		conn: conn,
 	}
 }
@@ -47,7 +47,7 @@ func (s *GRPCUsersStorage) Close() {
 // GetUsers implements users.IUsersStorage.
 func (s *GRPCUsersStorage) GetUsers(ctx context.Context) ([]models.User, error) {
 	const op = "storage.grpc.users.GetUsers"
-	log := s.log.With(
+	log := s.Log.With(
 		"op", op,
 	)
 
@@ -81,7 +81,7 @@ func (s *GRPCUsersStorage) GetUsers(ctx context.Context) ([]models.User, error) 
 // GetUserById implements users.IUsersStorage.
 func (s *GRPCUsersStorage) GetUserById(ctx context.Context, uid uuid.UUID) (models.User, error) {
 	const op = "storage.grpc.users.GetUserById"
-	log := s.log.With(
+	log := s.Log.With(
 		"op", op,
 	)
 
@@ -126,7 +126,7 @@ func (s *GRPCUsersStorage) GetUserById(ctx context.Context, uid uuid.UUID) (mode
 // Insert implements users.IUsersStorage.
 func (s *GRPCUsersStorage) Insert(ctx context.Context, userForInsert models.User) (models.User, error) {
 	const op = "storage.grpc.users.Insert"
-	log := s.log.With(
+	log := s.Log.With(
 		"op", op,
 	)
 
@@ -166,4 +166,3 @@ func (s *GRPCUsersStorage) Insert(ctx context.Context, userForInsert models.User
 
 	return insertedUser, nil
 }
-
