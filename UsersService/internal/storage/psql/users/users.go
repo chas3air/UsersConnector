@@ -18,9 +18,9 @@ import (
 )
 
 type UsersPsqlStorage struct {
-	log       *slog.Logger
+	Log       *slog.Logger
 	DB        *sql.DB
-	tableName string
+	TableName string
 }
 
 func New(log *slog.Logger, connStr string, tableName string) *UsersPsqlStorage {
@@ -37,9 +37,9 @@ func New(log *slog.Logger, connStr string, tableName string) *UsersPsqlStorage {
 	}
 
 	return &UsersPsqlStorage{
-		log:       log,
+		Log:       log,
 		DB:        db,
-		tableName: tableName,
+		TableName: tableName,
 	}
 }
 
@@ -56,7 +56,7 @@ func (u *UsersPsqlStorage) Close() {
 // GetUsers implements IUsersPsqlStorage.
 func (u *UsersPsqlStorage) GetUsers(ctx context.Context) ([]models.User, error) {
 	const op = "storage.psql.users.GetUsers"
-	log := u.log.With(
+	log := u.Log.With(
 		"op", op,
 	)
 
@@ -67,7 +67,7 @@ func (u *UsersPsqlStorage) GetUsers(ctx context.Context) ([]models.User, error) 
 	}
 
 	rows, err := u.DB.QueryContext(ctx, `
-		SELECT * FROM `+u.tableName+`;
+		SELECT * FROM `+u.TableName+`;
 	`)
 	if err != nil {
 		log.Error("Error retrieving all users", sl.Err(err))
@@ -94,7 +94,7 @@ func (u *UsersPsqlStorage) GetUsers(ctx context.Context) ([]models.User, error) 
 // GetUserById implements IUsersPsqlStorage.
 func (u *UsersPsqlStorage) GetUserById(ctx context.Context, uid uuid.UUID) (models.User, error) {
 	const op = "storage.psql.users.GetUserById"
-	log := u.log.With(
+	log := u.Log.With(
 		"op", op,
 	)
 
@@ -106,7 +106,7 @@ func (u *UsersPsqlStorage) GetUserById(ctx context.Context, uid uuid.UUID) (mode
 
 	var user models.User
 	err := u.DB.QueryRowContext(ctx, `
-		SELECT * FROM `+u.tableName+`
+		SELECT * FROM `+u.TableName+`
 		WHERE id=$1;
 	`, uid).Scan(&user.Id, &user.Login, &user.Password, &user.Role)
 	if err != nil {
@@ -125,7 +125,7 @@ func (u *UsersPsqlStorage) GetUserById(ctx context.Context, uid uuid.UUID) (mode
 // Insert implements IUsersPsqlStorage.
 func (u *UsersPsqlStorage) Insert(ctx context.Context, user models.User) (models.User, error) {
 	const op = "storage.psql.users.Insert"
-	log := u.log.With(
+	log := u.Log.With(
 		"op", op,
 	)
 
@@ -136,7 +136,7 @@ func (u *UsersPsqlStorage) Insert(ctx context.Context, user models.User) (models
 	}
 
 	_, err := u.DB.ExecContext(ctx, `
-		INSERT INTO `+u.tableName+` (id, login, password, role)
+		INSERT INTO `+u.TableName+` (id, login, password, role)
 		VALUES ($1, $2, $3, $4);
 	`, user.Id, user.Login, user.Password, user.Role)
 	if err != nil {
@@ -155,7 +155,7 @@ func (u *UsersPsqlStorage) Insert(ctx context.Context, user models.User) (models
 // Update implements IUsersPsqlStorage.
 func (u *UsersPsqlStorage) Update(ctx context.Context, uid uuid.UUID, user models.User) (models.User, error) {
 	const op = "storage.psql.users.Update"
-	log := u.log.With(
+	log := u.Log.With(
 		slog.String("op", op),
 	)
 
@@ -166,7 +166,7 @@ func (u *UsersPsqlStorage) Update(ctx context.Context, uid uuid.UUID, user model
 	}
 
 	result, err := u.DB.ExecContext(ctx, `
-		UPDATE `+u.tableName+`
+		UPDATE `+u.TableName+`
 		SET login=$1, password=$2, role=$3
 		WHERE id=$4;
 	`, user.Login, user.Password, user.Role, user.Id)
@@ -192,7 +192,7 @@ func (u *UsersPsqlStorage) Update(ctx context.Context, uid uuid.UUID, user model
 // Delete implements IUsersPsqlStorage.
 func (u *UsersPsqlStorage) Delete(ctx context.Context, uid uuid.UUID) (models.User, error) {
 	const op = "storage.psql.users.Delete"
-	log := u.log.With(
+	log := u.Log.With(
 		slog.String("op", op),
 	)
 
@@ -214,7 +214,7 @@ func (u *UsersPsqlStorage) Delete(ctx context.Context, uid uuid.UUID) (models.Us
 	}
 
 	_, err = u.DB.ExecContext(ctx, `
-		DELETE FROM `+u.tableName+` 
+		DELETE FROM `+u.TableName+` 
 		WHERE id = $1;
 	`, uid)
 	if err != nil {
